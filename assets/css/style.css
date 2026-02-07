@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap');
+
+body { 
+    background: #050505; 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    transition: background 0.8s ease;
+    overflow-x: hidden;
+    min-height: 100vh;
+    color: #f1f5f9;
+    padding-top: 85px;
+}
+
+
+nav.glass-panel {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: calc(100% - 2rem);
+    z-index: 1000;
+    margin: 0 auto;
+    max-width: 1280px; 
+}
+
+.glass-panel {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+
+.movie-card-fixed {
+    width: 160px !important;
+    min-width: 160px !important;
+    height: 350px !important; 
+    display: flex !important;
+    flex-direction: column !important;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 1rem;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    scroll-snap-align: start;
+}
+
+.title-truncate {
+    padding: 8px 8px 0 8px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    height: 32px !important; 
+    line-height: 1.2 !important;
+    font-size: 11px !important;
+    font-weight: bold;
+}
+
+.overview-truncate {
+    padding: 4px 8px 8px 8px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+    height: 45px !important; 
+    line-height: 1.3 !important;
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+}
+
+
+#slot-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 999;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#slot-btn:hover { transform: scale(1.1) rotate(-5deg); }
+
+.action-buttons-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start; 
+    align-items: center;
+    gap: 12px;
+    margin-top: 2rem;
+    position: relative;
+}
+
+
+#slot-overlay {
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    transition: all 0.5s ease;
+}
+
+.slot-machine-frame {
+    background: linear-gradient(180deg, #1e1e2e 0%, #111119 50%, #1e1e2e 100%);
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(99, 102, 241, 0.3);
+    border: 4px solid #1e293b;
+}
+
+.slot-window {
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+
+
+body.cinema-mode { background: #000 !important; }
+body.cinema-mode nav, 
+body.cinema-mode #slot-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.6s ease;
+}
+
+
+@media (max-width: 768px) {
+    body { padding-top: 140px; } 
+
+    nav.glass-panel {
+        top: 0.5rem;
+        left: 0.5rem;
+        right: 0.5rem;
+        width: calc(100% - 1rem);
+        padding: 0.75rem !important;
+    }
+
+    nav h1 { font-size: 1.25rem !important; }
+    #universal-search { height: 45px !important; }
+
+    .action-buttons-wrapper {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .movie-card-fixed {
+        width: 140px !important;
+        min-width: 140px !important;
+    }
+    
+    .poster-fixed {
+        height: 180px !important;
+    }
+
+
+    .mobile-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+   
+    select, input {
+        font-size: 16px !important;
+    }
+}
+
+.gallery-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 15px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gallery-container::-webkit-scrollbar {
+    height: 4px;
+}
