@@ -90,6 +90,9 @@
                             <button id="add-list-btn" class="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center bg-slate-800/80 border border-white/10 text-white rounded-2xl transition-all hover:bg-emerald-600 group active:scale-90">
                                 <span class="text-3xl md:text-4xl font-light group-hover:rotate-90 transition-transform duration-300">+</span>
                             </button>
+                            <button id="share-card-btn" class="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-2xl font-black transition-all flex items-center justify-center gap-2 border border-white/10">
+    📸 KARTI İNDİR
+</button>
                         </div>
                     </div>
                 </div>
@@ -207,6 +210,21 @@
         </div>
         <div id="countdown-circle" class="mt-10 md:mt-12 w-20 h-20 md:w-24 md:h-24 rounded-full border-8 border-indigo-600 flex items-center justify-center text-3xl md:text-4xl font-black text-white italic">3</div>
     </div>
+    <div id="share-card-template" class="fixed -left-[9999px] top-0 w-[400px] h-[600px] bg-slate-900 text-white p-8 flex flex-col items-center justify-between border-4 border-indigo-500 rounded-3xl overflow-hidden">
+    <div class="absolute inset-0 opacity-20" id="card-bg"></div>
+    <h2 class="text-2xl font-black text-indigo-400 tracking-widest uppercase">SİNE-RASGELE</h2>
+    
+    <div class="relative z-10 w-full flex flex-col items-center">
+        <img id="card-poster" src="" class="w-64 h-80 object-cover rounded-2xl shadow-2xl border-2 border-white/20 mb-4">
+        <h3 id="card-title" class="text-xl font-bold text-center px-4 leading-tight mb-2"></h3>
+        <p id="card-desc" class="text-sm text-slate-400 italic text-center px-6"></p>
+    </div>
+
+    <div class="z-10 flex flex-col items-center gap-2">
+        <div class="flex gap-1 text-amber-400" id="card-stars"></div>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">yilmazz1.github.io/sine-rasgele</p>
+    </div>
+</div>
 
     <div id="trailer-modal" class="hidden fixed inset-0 z-[1100] bg-slate-950/98 backdrop-blur-3xl flex items-center justify-center p-3">
         <div class="relative w-full max-w-5xl aspect-video rounded-[1.8rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
@@ -223,6 +241,21 @@
             <div class="pr-6 py-2 hidden sm:block text-white font-black text-[9px] md:text-[10px] uppercase italic tracking-widest leading-none">Şansıma<br>Güveniyorum</div>
         </div>
     </div>
+    <div id="share-card-template" style="position: fixed; left: -9999px; top: 0; w: 400px; height: 640px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 40px; background-color: #020617; border: 10px solid #1e1b4b; border-radius: 40px;">
+    <h2 style="color: #818cf8; font-size: 24px; font-weight: 900; letter-spacing: 4px; margin: 0;">SİNE-RASGELE</h2>
+    
+    <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <img id="card-poster" crossorigin="anonymous" src="" style="width: 280px; height: 400px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.2); object-fit: cover;">
+        <h3 id="card-title" style="color: #ffffff; font-size: 22px; font-weight: 800; text-align: center; margin: 0; padding: 0 10px; line-height: 1.2;"></h3>
+    </div>
+
+    <div style="text-align: center;">
+        <div id="card-stars" style="color: #fbbf24; font-size: 20px; margin-bottom: 10px;"></div>
+        <p style="color: #64748b; font-size: 10px; font-weight: bold; letter-spacing: 2px; margin: 0;">YILMAZZ1.GITHUB.IO</p>
+    </div>
+</div>
+</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="assets/js/config.js"></script>
 
     <script src="assets/js/script.js"></script>

@@ -361,22 +361,18 @@ function updateBadges() {
 async function showMovie(movie) {
     if (!movie) return;
     currentMovie = movie;
-    
 
     document.getElementById('placeholder').classList.add('hidden');
     const movieContent = document.getElementById('movie-content');
     movieContent.classList.remove('hidden');
-    
 
     const res = await fetch(`${BASE_URL}/movie/${movie.id}/credits?api_key=${API_KEY}`);
     const credits = await res.json();
     const cast = credits.cast ? credits.cast.slice(0, 5) : [];
 
-
     let titleElement = document.getElementById('title');
     titleElement.innerHTML = movie.title;
     if (movie.vote_average >= 8.1) titleElement.innerHTML += ` <span class="text-amber-500">🏆</span>`;
-
 
     document.getElementById('rating').innerText = `⭐ ${movie.vote_average.toFixed(1)}`;
     document.getElementById('poster').src = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750';
@@ -389,23 +385,38 @@ async function showMovie(movie) {
         </div>
     `).join('');
 
+ 
 
     document.getElementById('trailer-btn').onclick = () => openTrailer(movie.id);
 
     
-    movieContent.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-    });
+    const shareBtn = document.getElementById('share-card-btn'); 
+    if(shareBtn) {
+        shareBtn.onclick = () => downloadShareCard(movie);
+    }
+
+    movieContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-async function loadFromGallery(movieId) {
+async function loadFromGallery(movieId, mediaType = 'movie') {
     try {
-        const res = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=tr-TR`);
-        const movie = await res.json();
-        showMovie(movie);
+     
+        const type = (mediaType === 'tv') ? 'tv' : 'movie';
+        
+        const res = await fetch(`${BASE_URL}/${type}/${movieId}?api_key=${API_KEY}&language=tr-TR`);
+        const data = await res.json();
+
+       
+        if (!data || data.success === false) {
+            console.error("Veri bulunamadı!");
+            return;
+        }
+
+    
+        showMovie(data);
+
     } catch (err) {
-        console.error("Film yükleme hatası:", err);
+        console.error("Bağlantı ve veri çekme hatası:", err);
     }
 }
 
@@ -419,34 +430,98 @@ function setupUniversalSearch() {
     let debounceTimer;
     searchInput.oninput = () => {
         clearTimeout(debounceTimer);
-        const query = searchInput.value.trim().toLowerCase();
+        const query = searchInput.value.trim();
+        
+        if (query.length === 0) {
+            document.getElementById('artist-gallery').classList.add('hidden');
+            return;
+        }
+
         if (query.length < 3) return;
 
         spinner?.classList.remove('hidden');
         debounceTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${query}&language=tr-TR`);
+                const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=tr-TR`);
                 const data = await res.json();
                 
                 if (data.results && data.results.length > 0) {
-          
-                    const persons = data.results
-                        .filter(r => r.media_type === 'person')
-                        .sort((a, b) => b.popularity - a.popularity);
-
-                    if (persons.length > 0) {
-                        showArtistGallery(persons[0]);
-                    } else {
                    
-                        const movies = data.results
-                            .filter(m => m.poster_path)
-                            .sort((a, b) => b.popularity - a.popularity);
-                        if (movies[0]) showMovie(movies[0]);
+                    const movies = data.results.filter(m => (m.media_type === 'movie' || m.media_type === 'tv') && m.poster_path);
+                    
+                
+                    if (movies.length > 0 && query.toLowerCase().includes('batman')) {
+                        showGeneralResults(movies, query);
+                    } else {
+                     
+                        const persons = data.results.filter(r => r.media_type === 'person');
+                        if (persons.length > 0) {
+                            showArtistGallery(persons[0]);
+                        } else if (movies.length > 0) {
+                            showGeneralResults(movies, query);
+                        } else {
+                            showNoResultsFound(query);
+                        }
                     }
+                } else {
+                    showNoResultsFound(query);
                 }
-            } catch (e) { console.error(e); } finally { spinner?.classList.add('hidden'); }
-        }, 800);
+            } catch (e) { 
+                console.error(e); 
+            } finally { 
+                spinner?.classList.add('hidden'); 
+            }
+        }, 600);
     };
+}
+
+
+function showGeneralResults(movies, query) {
+    const gallery = document.getElementById('artist-gallery');
+    const content = document.getElementById('gallery-content');
+    const title = document.getElementById('gallery-title');
+
+    title.innerHTML = `<span class="text-indigo-400">🔍 "${query.toUpperCase()}"</span> Yapımları`;
+    
+
+    const sortedMovies = movies.sort((a, b) => b.popularity - a.popularity);
+
+
+    content.innerHTML = sortedMovies.map(movie => {
+        const mId = movie.id;
+        const mType = movie.media_type || 'movie'; 
+        
+        return `
+            <div onclick="loadFromGallery(${mId}, '${mType}')" class="flex-shrink-0 w-36 group cursor-pointer animate-hero">
+                <div class="relative overflow-hidden rounded-2xl shadow-lg border border-white/5">
+                    <img src="${IMG_URL + movie.poster_path}" class="w-full h-48 object-cover group-hover:scale-110 transition-all duration-500">
+                    <div class="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-black text-white shadow-xl">
+                        ⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}
+                    </div>
+                </div>
+                <p class="text-[9px] font-black text-white truncate mt-2 uppercase tracking-tighter">${movie.title || movie.name}</p>
+            </div>
+        `;
+    }).join('');
+
+    gallery.classList.remove('hidden');
+
+
+    if (sortedMovies.length > 0) {
+
+        loadFromGallery(sortedMovies[0].id, sortedMovies[0].media_type || 'movie');
+    }
+}
+
+
+function showNoResultsFound(query) {
+    const gallery = document.getElementById('artist-gallery');
+    const title = document.getElementById('gallery-title');
+    const content = document.getElementById('gallery-content');
+
+    title.innerHTML = `<span class="text-red-500">✕ SONUÇ YOK</span>`;
+    content.innerHTML = `<p class="text-slate-500 italic p-10 w-full text-center">"${query}" için bir sonuç bulunamadı.</p>`;
+    gallery.classList.remove('hidden');
 }
 
 async function showArtistGallery(person) {
@@ -457,30 +532,21 @@ async function showArtistGallery(person) {
     const res = await fetch(`${BASE_URL}/person/${person.id}/movie_credits?api_key=${API_KEY}&language=tr-TR`);
     const data = await res.json();
 
-
     const movies = data.cast
         .filter(m => m.poster_path) 
-        .sort((a, b) => {
-       
-            if (b.vote_average !== a.vote_average) {
-                return b.vote_average - a.vote_average;
-            }
-          
-            return b.popularity - a.popularity;
-        });
+        .sort((a, b) => b.vote_average - a.vote_average);
 
-    title.innerHTML = `<span class="text-indigo-400">👤 ${person.name.toUpperCase()}</span> Tüm Yapımları (Puan Sıralı)`;
+    title.innerHTML = `<span class="text-indigo-400">👤 ${person.name.toUpperCase()}</span> Tüm Yapımları`;
     
     content.innerHTML = movies.map(movie => `
         <div onclick="loadFromGallery(${movie.id})" class="flex-shrink-0 w-36 group cursor-pointer">
             <div class="relative overflow-hidden rounded-2xl shadow-lg border border-white/5">
                 <img src="${IMG_URL + movie.poster_path}" class="w-full h-48 object-cover group-hover:scale-110 transition-all duration-500">
                 <div class="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-black text-white shadow-xl">
-                    ⭐ ${movie.vote_average > 0 ? movie.vote_average.toFixed(1) : '0.0'}
+                    ⭐ ${movie.vote_average.toFixed(1)}
                 </div>
             </div>
             <p class="text-[9px] font-black text-white truncate mt-2 uppercase tracking-tighter">${movie.title}</p>
-            <p class="text-[8px] text-slate-500 font-bold">${movie.release_date ? movie.release_date.split('-')[0] : '---'}</p>
         </div>
     `).join('');
 
@@ -491,29 +557,6 @@ async function showArtistGallery(person) {
         loadFromGallery(movies[0].id);
     }
 }
-
-const addListBtn = document.getElementById('add-list-btn');
-if (addListBtn) {
-    addListBtn.onclick = async () => {
-        if (!currentMovie || isInAnyList(currentMovie.id)) return;
-
-        watchList.push({ 
-            id: currentMovie.id, 
-            title: currentMovie.title, 
-            poster_path: currentMovie.poster_path,
-            vote_average: currentMovie.vote_average 
-        });
-
-        saveAll();
-
-        if (typeof getInstantAiRecommendation === "function") {
-            getInstantAiRecommendation(currentMovie.title);
-        }
-
-        confetti({ particleCount: 40, spread: 30, origin: { y: 0.9 } });
-    };
-}
-
 window.moveToWatched = (id) => {
     const idx = watchList.findIndex(m => m.id === id);
     if (idx > -1) {
@@ -776,5 +819,64 @@ window.addAiMovieToList = (id) => {
    
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
 };
+async function downloadShareCard(movie) {
+    if (!movie) return;
+
+    const template = document.getElementById('share-card-template');
+    const cardTitle = document.getElementById('card-title');
+    const cardPoster = document.getElementById('card-poster');
+    const cardStars = document.getElementById('card-stars');
+    const shareBtn = document.getElementById('share-card-btn');
+
+    const originalBtnText = shareBtn.innerHTML;
+    shareBtn.innerHTML = "⌛ Hazırlanıyor...";
+    shareBtn.disabled = true;
+
+    try {
+       
+        cardTitle.innerText = movie.title.toUpperCase();
+        cardStars.innerHTML = "⭐".repeat(Math.round(movie.vote_average / 2));
+        
+        const proxyUrl = `https://images.weserv.nl/?url=https://image.tmdb.org/t/p/w500${movie.poster_path}&w=500&h=750&fit=cover`;
+        
+        
+        template.style.left = "0";
+        template.style.opacity = "1";
+        template.style.zIndex = "-100";
+
+        await new Promise((resolve, reject) => {
+            cardPoster.onload = resolve;
+            cardPoster.onerror = reject;
+            cardPoster.src = proxyUrl;
+        });
+
+    
+        await new Promise(r => setTimeout(r, 600));
+
+        const canvas = await html2canvas(template, {
+            useCORS: true,
+            scale: 2, 
+            backgroundColor: "#020617", 
+            logging: false
+        });
+
+  
+        const image = canvas.toDataURL("image/png", 1.0);
+        const link = document.createElement('a');
+        link.download = `${movie.title.replace(/\s+/g, '_')}_SineRasgele.png`;
+        link.href = image;
+        link.click();
+        
+        confetti({ particleCount: 100, spread: 70 });
+
+    } catch (error) {
+        console.error("Kart Hatası:", error);
+        alert("Görsel oluşturma başarısız oldu.");
+    } finally {
+        template.style.left = "-9999px";
+        shareBtn.innerHTML = originalBtnText;
+        shareBtn.disabled = false;
+    }
+}
 
 window.closeGallery = () => document.getElementById('artist-gallery').classList.add('hidden');
