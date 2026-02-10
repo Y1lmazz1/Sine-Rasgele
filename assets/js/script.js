@@ -1,16 +1,17 @@
 
-const API_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.API_KEY : (window.API_KEY || '');
 
-const TMDB_API_KEY = "BURAYA_TMDB_API_KEY_GELECEK"; 
+const API_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.API_KEY : '';
+const GEMINI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.GEMINI_API_KEY : '';
+
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
 
-if (!API_KEY) {
-    console.error("DİKKAT: API Anahtarı bulunamadı!");
-}
 
+if (!API_KEY) {
+    console.warn("UYARI: API Anahtarı bulunamadı! Lütfen config.js dosyasını kontrol edin.");
+}
 let watchList = JSON.parse(localStorage.getItem('myWatchList')) || [];
 let watchedList = JSON.parse(localStorage.getItem('myWatchedList')) || [];
 let currentMovie = null;
