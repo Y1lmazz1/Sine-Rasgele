@@ -1,34 +1,56 @@
-# 🎬 Sine-Rasgele 
-**Kişiselleştirilmiş Film Deneyimi**
+🎬 Sine-Rasgele
+Yapay Zeka Destekli, Kişiselleştirilmiş Film Deneyimi
 
-Sine-Rasgele, film seçmekte zorlanan sinemaseverler için geliştirilmiş, akıllı filtreleme algoritmasına sahip modern bir web uygulamasıdır. TMDB API altyapısını kullanarak size özel öneriler sunar.
+Sine-Rasgele, film seçme sürecini bir kaostan eğlenceli bir oyuna dönüştüren modern bir web uygulamasıdır. TMDB ve Google Gemini AI altyapısını kullanarak size sadece film önermekle kalmaz, neden izlemeniz gerektiğini de söyler.
 
+✨ Öne Çıkan Özellikler
+🤖 AI Mentor (Gemini): İzleme listenize film eklediğiniz an, Yapay Zeka devreye girer ve o seçiminize benzer 5 gizli hazineyi nedenleriyle birlikte önerir.
 
+🎰 Film Slot Makinesi: Karar veremiyor musunuz? Yüksek puanlı filmler arasında slot makinesini çevirin ve şanslı filmi 5 saniye içinde bulun!
 
-## ✨ Öne Çıkan Özellikler
+🧠 Akıllı Algoritma: İzleme listenizdeki veya daha önce izlediğiniz filmleri hatırlar; öneri motoru bu filmleri karşınıza tekrar çıkarmaz.
 
-* **🧠 Akıllı Algoritma:** İzlediğiniz veya izleme listenize eklediğiniz filmleri hafızasında tutar ve öneri butonuna bastığınızda bu filmleri karşınıza çıkarmaz.
-* **🎭 Ruh Haline Göre Seçim:** "Beyin Yakıcı", "Eğlenceli" veya "Adrenalin" modlarıyla modunuza uygun türleri anında filtreler.
-* **🎰 Film Slot Makinesi:** Karar veremiyor musunuz? Slot makinesini çevirin ve şanslı filmi 5 saniye içinde bulun!
-* **🍿 İzleme Listeleri:** Beğendiğiniz filmleri kaydedin, izledikten sonra "İzlemişler" listenize taşıyın.
-* **🏆 Rozet Sistemi:** İzlediğiniz film sayısına göre "Sinema Çırağı"ndan "Kültür Mantarı"na kadar farklı rozetler kazanın.
-* **🔦 Sinema Modu:** Odaklanmak istediğinizde arayüzü karartarak sadece filme odaklanmanızı sağlar.
+👤 Sanatçı Galerisi: Bir oyuncu veya yönetmen aratın; tüm filmografisini puan sırasına göre anında görüntüleyin.
 
-## 🛠️ Kurulum
+🍿 Dinamik Listeler: Filmleri "İzlenecekler"e ekleyin, izledikten sonra tek tıkla "İzlenenler"e taşıyın.
 
-1.  Bu depoyu klonlayın: `git clone https://github.com/Y1lmazz1/Sine-Rasgele.git`
-2.  `config.js` dosyasını oluşturun ve [TMDB](https://www.themoviedb.org/settings/api) üzerinden aldığınız API anahtarınızı ekleyin:
-    ```javascript
-    const CONFIG = {
-        API_KEY: 'BURAYA_API_ANAHTARINIZI_YAZIN'
-    };
-    ```
-3.  `index.html` dosyasını tarayıcınızda açın.
+🏆 Rozet Sistemi: İzlediğiniz film sayısına ve türlerine göre "Çaylak"tan "Üstad"a kadar farklı rozetler kazanın.
 
-## 🚀 Teknolojiler
+🛠️ Kurulum ve Güvenlik
+Projeyi kendi bilgisayarınızda çalıştırmak için şu adımları izleyin:
 
-* **HTML5 & CSS3** (Tailwind CSS Altyapısı)
-* **JavaScript (ES6+)**
-* **TMDB API**
-* **LocalStorage** (Verilerin tarayıcıda saklanması için)
+Bu depoyu klonlayın:
+
+Bash
+git clone https://github.com/Y1lmazz1/Sine-Rasgele.git
+Ana dizinde config.js adında bir dosya oluşturun (Bu dosya güvenlik nedeniyle .gitignore ile gizlenmiştir).
+
+İçerisine kendi API anahtarlarınızı şu formatta ekleyin:
+
+JavaScript
+const CONFIG = {
+    API_KEY: 'TMDB_API_ANAHTARINIZ',
+    GEMINI_API_KEY: 'GEMINI_API_ANAHTARINIZ'
+};
+index.html dosyasını tarayıcınızda açın.
+
+🚀 Teknolojiler
+Frontend: HTML5, CSS3 (Tailwind CSS)
+
+Logic: JavaScript (ES6+), Asynchronous API Calls
+
+AI: Google Gemini Pro API
+
+Data: TMDB (The Movie Database) API
+
+Storage: Browser LocalStorage (Verileriniz tarayıcınızda güvende kalır)
+
+📸 Ekran Görüntüleri
+
+<img width="1052" height="641" alt="Ekran görüntüsü 2026-02-10 035739" src="https://github.com/user-attachments/assets/e89ba68e-4c6a-4c87-8271-d9c2ca390753" />
+
+<img width="1028" height="900" alt="Ekran görüntüsü 2026-02-10 035713" src="https://github.com/user-attachments/assets/31685b80-061a-4663-ad8e-e3fe10eaf315" />
+
+<img width="1901" height="927" alt="Ekran görüntüsü 2026-02-10 035649" src="https://github.com/user-attachments/assets/9bb5337f-6196-418b-96ec-0db35cd92fbe" />
+
 
