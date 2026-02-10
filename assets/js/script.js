@@ -420,7 +420,10 @@ async function loadFromGallery(movieId, mediaType = 'movie') {
     }
 }
 
-
+/**
+ * EVRENSEL ARAMA MOTORU
+ * Sorgunun türünü (Kişi vs Film) analiz eder ve popüler sonuçları önceliklendirir.
+ */
 
 function setupUniversalSearch() {
     const searchInput = document.getElementById('universal-search');
@@ -428,46 +431,68 @@ function setupUniversalSearch() {
     if (!searchInput) return;
 
     let debounceTimer;
+
     searchInput.oninput = () => {
         clearTimeout(debounceTimer);
-        const query = searchInput.value.trim();
+        const query = searchInput.value.trim().toLowerCase();
         
         if (query.length === 0) {
-            document.getElementById('artist-gallery').classList.add('hidden');
+            const gallery = document.getElementById('artist-gallery');
+            if(gallery) gallery.classList.add('hidden');
             return;
         }
 
         if (query.length < 3) return;
 
         spinner?.classList.remove('hidden');
+
         debounceTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=tr-TR`);
+                const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=tr-TR&include_adult=false`);
                 const data = await res.json();
                 
                 if (data.results && data.results.length > 0) {
-                   
-                    const movies = data.results.filter(m => (m.media_type === 'movie' || m.media_type === 'tv') && m.poster_path);
                     
-                
-                    if (movies.length > 0 && query.toLowerCase().includes('batman')) {
-                        showGeneralResults(movies, query);
-                    } else {
-                     
-                        const persons = data.results.filter(r => r.media_type === 'person');
-                        if (persons.length > 0) {
-                            showArtistGallery(persons[0]);
-                        } else if (movies.length > 0) {
-                            showGeneralResults(movies, query);
-                        } else {
-                            showNoResultsFound(query);
-                        }
+                    const personResults = data.results.filter(r => r.media_type === 'person');
+                    const movieResults = data.results.filter(r => 
+                        (r.media_type === 'movie' || r.media_type === 'tv') && 
+                        r.poster_path
+                    );
+
+                    const bestPersonMatch = personResults.find(p => 
+                        p.name.toLowerCase().includes(query) && p.popularity > 5
+                    );
+
+                    const isFamousPersonSearch = bestPersonMatch && (
+                        query.includes("nolan") || 
+                        query.includes("pitt") || 
+                        query.includes("tarantino") || 
+                        bestPersonMatch.name.toLowerCase() === query
+                    );
+
+                    if (isFamousPersonSearch) {
+                        showArtistGallery(bestPersonMatch);
+                    } 
+                    else if (movieResults.length > 0) {
+                        const filteredMovies = movieResults
+                            .filter(m => m.popularity > 1.0) 
+                            .sort((a, b) => b.popularity - a.popularity)
+                            .slice(0, 20)
+                            .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+                        
+                        showGeneralResults(filteredMovies, query);
+                    } 
+                    else if (personResults.length > 0) {
+                        showArtistGallery(personResults[0]);
+                    }
+                    else {
+                        showNoResultsFound(query);
                     }
                 } else {
                     showNoResultsFound(query);
                 }
             } catch (e) { 
-                console.error(e); 
+                console.error("Arama hatası:", e); 
             } finally { 
                 spinner?.classList.add('hidden'); 
             }
@@ -483,20 +508,17 @@ function showGeneralResults(movies, query) {
 
     title.innerHTML = `<span class="text-indigo-400">🔍 "${query.toUpperCase()}"</span> Yapımları`;
     
-
-    const sortedMovies = movies.sort((a, b) => b.popularity - a.popularity);
-
-
-    content.innerHTML = sortedMovies.map(movie => {
+    content.innerHTML = movies.map(movie => {
         const mId = movie.id;
         const mType = movie.media_type || 'movie'; 
+        const vote = movie.vote_average ? movie.vote_average.toFixed(1) : '0.0';
         
         return `
             <div onclick="loadFromGallery(${mId}, '${mType}')" class="flex-shrink-0 w-36 group cursor-pointer animate-hero">
                 <div class="relative overflow-hidden rounded-2xl shadow-lg border border-white/5">
                     <img src="${IMG_URL + movie.poster_path}" class="w-full h-48 object-cover group-hover:scale-110 transition-all duration-500">
                     <div class="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-black text-white shadow-xl">
-                        ⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}
+                        ⭐ ${vote}
                     </div>
                 </div>
                 <p class="text-[9px] font-black text-white truncate mt-2 uppercase tracking-tighter">${movie.title || movie.name}</p>
@@ -506,10 +528,8 @@ function showGeneralResults(movies, query) {
 
     gallery.classList.remove('hidden');
 
-
-    if (sortedMovies.length > 0) {
-
-        loadFromGallery(sortedMovies[0].id, sortedMovies[0].media_type || 'movie');
+    if (movies.length > 0) {
+        loadFromGallery(movies[0].id, movies[0].media_type || 'movie');
     }
 }
 
@@ -520,7 +540,7 @@ function showNoResultsFound(query) {
     const content = document.getElementById('gallery-content');
 
     title.innerHTML = `<span class="text-red-500">✕ SONUÇ YOK</span>`;
-    content.innerHTML = `<p class="text-slate-500 italic p-10 w-full text-center">"${query}" için bir sonuç bulunamadı.</p>`;
+    content.innerHTML = `<p class="text-slate-500 italic p-10 w-full text-center">"${query}" için kriterlere uygun yapım bulunamadı.</p>`;
     gallery.classList.remove('hidden');
 }
 
@@ -529,50 +549,46 @@ async function showArtistGallery(person) {
     const content = document.getElementById('gallery-content');
     const title = document.getElementById('gallery-title');
 
-    const res = await fetch(`${BASE_URL}/person/${person.id}/movie_credits?api_key=${API_KEY}&language=tr-TR`);
+    const res = await fetch(`${BASE_URL}/person/${person.id}/combined_credits?api_key=${API_KEY}&language=tr-TR`);
     const data = await res.json();
 
-    const movies = data.cast
-        .filter(m => m.poster_path) 
-        .sort((a, b) => b.vote_average - a.vote_average);
+    const allCredits = [...(data.cast || []), ...(data.crew || [])];
+    
+    // Filtrele ve Sırala:
+    const movies = allCredits
+        .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i) 
+        .filter(m => m.poster_path && m.vote_count > 5)
+        .sort((a, b) => b.popularity - a.popularity) 
+        .slice(0, 30)
+        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0)); 
 
     title.innerHTML = `<span class="text-indigo-400">👤 ${person.name.toUpperCase()}</span> Tüm Yapımları`;
     
-    content.innerHTML = movies.map(movie => `
-        <div onclick="loadFromGallery(${movie.id})" class="flex-shrink-0 w-36 group cursor-pointer">
-            <div class="relative overflow-hidden rounded-2xl shadow-lg border border-white/5">
-                <img src="${IMG_URL + movie.poster_path}" class="w-full h-48 object-cover group-hover:scale-110 transition-all duration-500">
-                <div class="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-black text-white shadow-xl">
-                    ⭐ ${movie.vote_average.toFixed(1)}
+    if (movies.length === 0) {
+        content.innerHTML = `<p class="text-slate-500 italic p-10 w-full text-center">Bu sanatçı için uygun yapım bulunamadı.</p>`;
+    } else {
+        content.innerHTML = movies.map(movie => `
+            <div onclick="loadFromGallery(${movie.id}, '${movie.media_type || 'movie'}')" class="flex-shrink-0 w-36 group cursor-pointer animate-hero">
+                <div class="relative overflow-hidden rounded-2xl shadow-lg border border-white/5">
+                    <img src="${IMG_URL + movie.poster_path}" class="w-full h-48 object-cover group-hover:scale-110 transition-all duration-500">
+                    <div class="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-black text-white shadow-xl">
+                        ⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}
+                    </div>
                 </div>
+                <p class="text-[9px] font-black text-white truncate mt-2 uppercase tracking-tighter">${movie.title || movie.name}</p>
             </div>
-            <p class="text-[9px] font-black text-white truncate mt-2 uppercase tracking-tighter">${movie.title}</p>
-        </div>
-    `).join('');
+        `).join('');
+    }
 
     gallery.classList.remove('hidden');
-    gallery.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
+    
     if (movies.length > 0) {
-        loadFromGallery(movies[0].id);
+        loadFromGallery(movies[0].id, movies[0].media_type || 'movie');
     }
 }
-window.moveToWatched = (id) => {
-    const idx = watchList.findIndex(m => m.id === id);
-    if (idx > -1) {
-        watchedList.push(watchList[idx]);
-        watchList.splice(idx, 1);
-        saveAll();
-        
-        confetti({ particleCount: 100, spread: 50 });
-    }
-};
 
-window.removeFromList = (id, type) => {
-    if(type === 'watch') watchList = watchList.filter(m => m.id !== id);
-    else watchedList = watchedList.filter(m => m.id !== id);
-    saveAll();
-};
+
+
 
 function saveAll() {
 
@@ -602,33 +618,54 @@ window.closeTrailer = () => {
     document.getElementById('trailer-container').innerHTML = ''; 
 };
 
+
 function renderWatchList() {
+
+    const watchList = JSON.parse(localStorage.getItem('myWatchList')) || [];
     const container = document.getElementById('watch-list');
+    
     if(!container) return;
+
+ 
+    if (watchList.length === 0) {
+        container.innerHTML = `<p class="text-[10px] text-slate-500 text-center py-4">Liste boş</p>`;
+        return;
+    }
+
     container.innerHTML = watchList.map(movie => `
         <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-xl mb-2 border border-slate-700/30">
             <div class="flex items-center gap-2 overflow-hidden">
-                <img src="${IMG_URL + movie.poster_path}" class="w-8 h-10 object-cover rounded-md">
+                <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" class="w-8 h-10 object-cover rounded-md">
                 <p class="text-[10px] font-bold text-white w-24 truncate">${movie.title}</p>
             </div>
             <div class="flex gap-1">
-                <button onclick="moveToWatched(${movie.id})" class="text-emerald-500 p-1">✓</button>
-                <button onclick="removeFromList(${movie.id}, 'watch')" class="text-slate-500 p-1">✕</button>
+                <!-- Fonksiyonların window objesinde tanımlı olduğundan emin olun -->
+                <button onclick="moveToWatched(${movie.id})" class="text-emerald-500 p-1 hover:scale-125 transition-transform">✓</button>
+                <button onclick="removeFromList(${movie.id}, 'watch')" class="text-slate-500 p-1 hover:text-red-500">✕</button>
             </div>
         </div>
     `).join('');
 }
 
+
 function renderWatchedList() {
+    const watchedList = JSON.parse(localStorage.getItem('myWatchedList')) || [];
     const container = document.getElementById('watched-list');
+    
     if(!container) return;
+
+    if (watchedList.length === 0) {
+        container.innerHTML = `<p class="text-[10px] text-slate-500 text-center py-4">Henüz izlenen yok</p>`;
+        return;
+    }
+
     container.innerHTML = watchedList.map(movie => `
         <div class="flex items-center justify-between bg-emerald-900/5 p-2 rounded-xl mb-2 grayscale">
             <div class="flex items-center gap-2">
-                <img src="${IMG_URL + movie.poster_path}" class="w-6 h-8 object-cover rounded opacity-40">
+                <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" class="w-6 h-8 object-cover rounded opacity-40">
                 <p class="text-[9px] truncate w-20 text-slate-500">${movie.title}</p>
             </div>
-            <button onclick="removeFromList(${movie.id}, 'watched')" class="text-slate-700 p-1">✕</button>
+            <button onclick="removeFromList(${movie.id}, 'watched')" class="text-slate-700 p-1 hover:text-red-500">✕</button>
         </div>
     `).join('');
 }
@@ -645,7 +682,11 @@ async function getDailyPick() {
 let isAiProcessing = false; 
 window.tempAiMovies = window.tempAiMovies || {};
 
+
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+
+
 
 
 async function getInstantAiRecommendation(selectedMovieTitle) {
@@ -691,31 +732,34 @@ async function getInstantAiRecommendation(selectedMovieTitle) {
             body: JSON.stringify({ contents: [{ parts: [{ text: instantPrompt }] }] })
         });
 
-    
         if (response.status === 429) {
             throw new Error("Limit doldu. Lütfen 1 dakika bekleyin.");
         }
 
         const data = await response.json();
-        
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content.parts[0].text) {
+
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
             throw new Error("Yapay zeka şu an meşgul, lütfen tekrar deneyin.");
         }
 
         let aiResponse = data.candidates[0].content.parts[0].text;
-        
-    
         aiResponse = aiResponse.replace(/[`]|json|html/g, "").trim();
 
         const moviesArray = aiResponse.split('#').filter(item => item.includes('|'));
 
-        const moviePromises = moviesArray.slice(0, 5).map(item => {
-            const parts = item.split('|');
-            return fetchMovieData(parts[0].trim(), parts[1].trim());
+        const moviePromises = moviesArray.slice(0, 5).map(async item => {
+            const parts = item.split('|').map(p => p.trim());
+            if (!parts[0]) return null; // film adı yoksa null dön
+            try {
+                return await fetchMovieData(parts[0], parts[1] || '');
+            } catch (err) {
+                console.warn("Film verisi alınamadı:", parts[0], err);
+                return null;
+            }
         });
 
         const results = await Promise.all(moviePromises);
-        const validResults = results.filter(r => r !== null);
+        const validResults = results.filter(r => r && r.id); // sadece geçerli film objeleri
 
         if (validResults.length === 0) {
             throw new Error("Eşleşen film bulunamadı.");
@@ -729,7 +773,7 @@ async function getInstantAiRecommendation(selectedMovieTitle) {
             </div>
             <div id="ai-results-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 animate-hero"></div>
         `;
-        
+
         const grid = document.getElementById('ai-results-grid');
         validResults.forEach(movieObj => renderFinalCard(movieObj, grid));
 
@@ -744,10 +788,10 @@ async function getInstantAiRecommendation(selectedMovieTitle) {
             </div>
         `;
     } finally {
-  
         isAiProcessing = false;
     }
 }
+
 
 
 async function fetchMovieData(title, reason) {
@@ -879,4 +923,82 @@ async function downloadShareCard(movie) {
     }
 }
 
+<<<<<<< HEAD
 window.closeGallery = () => document.getElementById('artist-gallery').classList.add('hidden');
+=======
+window.addToWatchList = function () {
+    if (!currentMovie || !currentMovie.id) {
+        console.warn("currentMovie boş, ekleme iptal");
+        return;
+    }
+
+    watchList = JSON.parse(localStorage.getItem('myWatchList')) || [];
+
+    if (watchList.some(m => String(m.id) === String(currentMovie.id))) {
+        console.log("Film zaten listede");
+        return;
+    }
+
+    const movieData = {
+        id: currentMovie.id,
+        title: currentMovie.title || currentMovie.name || "Bilinmeyen",
+        poster_path: currentMovie.poster_path || null,
+        vote_average: currentMovie.vote_average || 0,
+        genres: currentMovie.genres || []
+    };
+
+    watchList.push(movieData);
+    localStorage.setItem('myWatchList', JSON.stringify(watchList));
+
+    renderWatchList();
+
+    if (typeof getInstantAiRecommendation === 'function') {
+        getInstantAiRecommendation(movieData.title);
+    }
+
+    if (typeof confetti === 'function') {
+        confetti({ particleCount: 120, spread: 70 });
+    }
+
+    console.log("Listeye eklendi:", movieData.title);
+};
+
+
+window.moveToWatched = function(movieId) {
+    let watchList = JSON.parse(localStorage.getItem('myWatchList')) || [];
+    let watchedList = JSON.parse(localStorage.getItem('myWatchedList')) || [];
+
+    const index = watchList.findIndex(m => String(m.id) === String(movieId));
+    
+    if (index !== -1) {
+        const movie = watchList[index];
+        
+
+        if (!watchedList.some(m => String(m.id) === String(movieId))) {
+            watchedList.push(movie);
+        }
+        
+
+        watchList.splice(index, 1);
+
+        localStorage.setItem('myWatchList', JSON.stringify(watchList));
+        localStorage.setItem('myWatchedList', JSON.stringify(watchedList));
+
+
+        renderWatchList();
+renderWatchedList();
+updateBadges();
+calculateAndRenderStats();
+       
+        if (typeof updateBadges === 'function') updateBadges();
+        if (typeof calculateAndRenderStats === 'function') {
+    calculateAndRenderStats();
+}
+
+    }
+};
+
+window.renderWatchList = renderWatchList;
+window.renderWatchedList = renderWatchedList;
+window.closeGallery = () => document.getElementById('artist-gallery').classList.add('hidden');
+>>>>>>> 8e1b94e (İstatistiklerim kısmı eklendi)

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Analiz Merkezi | MovieApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #020617; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <header class="p-6 border-b border-white/5 flex justify-between items-center glass sticky top-0 z-50">
+        <h1 class="text-2xl font-black italic tracking-tighter">DATA<span class="text-indigo-500">LAB</span></h1>
+        <a href="index.html" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-xs font-bold transition-all">
+            ← ANA SAYFAYA DÖN
+        </a>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-8">
+        <div class="mb-12">
+            <h2 class="text-5xl font-black text-white italic mb-2">İZLEME <span class="text-indigo-500">ÖZETİ</span></h2>
+            <p class="text-slate-500 font-medium">Film kütüphanenin sayısal analizi ve izleme alışkanlıkların.</p>
+        </div>
+
+        <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glass rounded-[2.5rem] p-8 shadow-2xl">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-shapes text-indigo-400"></i> Tür Tercihlerin
+                </h3>
+                <div id="genre-container" class="space-y-4">
+                    </div>
+            </div>
+
+            <div class="glass rounded-[2.5rem] p-8">
+                <h3 class="text-xl font-bold mb-6">🏆 Favori Yapımların</h3>
+                <div id="top-rated-list" class="space-y-4">
+                    </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <script src="assets/js/stats.js"></script>
+
+
+
+</body>
+</html>
