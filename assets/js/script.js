@@ -644,7 +644,7 @@ async function getDailyPick() {
 
 let isAiProcessing = false; 
 window.tempAiMovies = window.tempAiMovies || {};
-const GEMINI_API_KEY = 'AIzaSyCqczKV_j4JsO7tBJfrqhmCPtFjC5a8Jig'; 
+
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 
