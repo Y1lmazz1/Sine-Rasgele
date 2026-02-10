@@ -1,5 +1,7 @@
-// Önce CONFIG objesine bak, yoksa window.env (canlı ortam) kontrol et
+
 const API_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.API_KEY : (window.API_KEY || '');
+
+const TMDB_API_KEY = "BURAYA_TMDB_API_KEY_GELECEK"; 
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
@@ -374,7 +376,7 @@ async function showMovie(movie) {
     titleElement.innerHTML = movie.title;
     if (movie.vote_average >= 8.1) titleElement.innerHTML += ` <span class="text-amber-500">🏆</span>`;
 
-    // İçerik Doldurma
+
     document.getElementById('rating').innerText = `⭐ ${movie.vote_average.toFixed(1)}`;
     document.getElementById('poster').src = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750';
     document.getElementById('overview').innerText = movie.overview || "Açıklama bulunmuyor.";
@@ -493,13 +495,21 @@ const addListBtn = document.getElementById('add-list-btn');
 if (addListBtn) {
     addListBtn.onclick = async () => {
         if (!currentMovie || isInAnyList(currentMovie.id)) return;
+
         watchList.push({ 
             id: currentMovie.id, 
             title: currentMovie.title, 
             poster_path: currentMovie.poster_path,
             vote_average: currentMovie.vote_average 
         });
+
         saveAll();
+
+        if (typeof getInstantAiRecommendation === "function") {
+            getInstantAiRecommendation(currentMovie.title);
+        }
+
+        confetti({ particleCount: 40, spread: 30, origin: { y: 0.9 } });
     };
 }
 
@@ -509,6 +519,7 @@ window.moveToWatched = (id) => {
         watchedList.push(watchList[idx]);
         watchList.splice(idx, 1);
         saveAll();
+        
         confetti({ particleCount: 100, spread: 50 });
     }
 };
@@ -520,12 +531,17 @@ window.removeFromList = (id, type) => {
 };
 
 function saveAll() {
+
     localStorage.setItem('myWatchList', JSON.stringify(watchList));
     localStorage.setItem('myWatchedList', JSON.stringify(watchedList));
+   
     renderWatchList(); 
     renderWatchedList();
     updateBadges();
+
+
 }
+
 
 async function openTrailer(movieId) {
     const res = await fetch(`${BASE_URL}/movie/${movieId}/videos?api_key=${API_KEY}`);
@@ -580,5 +596,184 @@ async function getDailyPick() {
         
     } catch (e) { console.error(e); }
 }
+
+
+let isAiProcessing = false; 
+window.tempAiMovies = window.tempAiMovies || {};
+const GEMINI_API_KEY = 'AIzaSyCqczKV_j4JsO7tBJfrqhmCPtFjC5a8Jig'; 
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+
+async function getInstantAiRecommendation(selectedMovieTitle) {
+    const aiPanel = document.getElementById('ai-mentor-panel');
+    const aiText = document.getElementById('ai-recommendation-text');
+
+    if (!aiPanel || !aiText) return;
+
+    if (isAiProcessing) {
+        console.warn("Lütfen bekleyin, öneriler hazırlanıyor...");
+        return;
+    }
+
+    isAiProcessing = true;
+    aiPanel.classList.remove('hidden');
+
+    aiText.innerHTML = `
+        <div class="flex flex-col items-center w-full min-h-[300px]">
+            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] animate-pulse mb-8 italic">
+                "${selectedMovieTitle}" Seçimine Özel Liste Hazırlanıyor...
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 w-full px-4">
+                ${Array(5).fill(0).map(() => `
+                    <div class="bg-slate-800/40 border border-white/5 rounded-2xl p-2 animate-pulse flex flex-col h-[280px]">
+                        <div class="bg-slate-700/50 w-full h-40 rounded-xl mb-3"></div>
+                        <div class="bg-slate-700/50 h-3 w-3/4 rounded mb-2"></div>
+                        <div class="bg-slate-700/50 h-2 w-full rounded mb-1"></div>
+                        <div class="bg-slate-700/50 h-8 w-full rounded-xl mt-auto"></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    const instantPrompt = `Bana "${selectedMovieTitle}" filmine benzer 5 film önerisi yap. 
+    Sadece isim ve kısa bir neden yaz. 
+    Format: Film Adı | Kısa Neden # Film Adı | Kısa Neden`;
+
+    try {
+        const response = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: instantPrompt }] }] })
+        });
+
+    
+        if (response.status === 429) {
+            throw new Error("Limit doldu. Lütfen 1 dakika bekleyin.");
+        }
+
+        const data = await response.json();
+        
+        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content.parts[0].text) {
+            throw new Error("Yapay zeka şu an meşgul, lütfen tekrar deneyin.");
+        }
+
+        let aiResponse = data.candidates[0].content.parts[0].text;
+        
+    
+        aiResponse = aiResponse.replace(/[`]|json|html/g, "").trim();
+
+        const moviesArray = aiResponse.split('#').filter(item => item.includes('|'));
+
+        const moviePromises = moviesArray.slice(0, 5).map(item => {
+            const parts = item.split('|');
+            return fetchMovieData(parts[0].trim(), parts[1].trim());
+        });
+
+        const results = await Promise.all(moviePromises);
+        const validResults = results.filter(r => r !== null);
+
+        if (validResults.length === 0) {
+            throw new Error("Eşleşen film bulunamadı.");
+        }
+
+        aiText.innerHTML = `
+            <div class="mb-6 text-center">
+                <span class="text-[10px] bg-indigo-500/20 text-indigo-400 py-1.5 px-4 rounded-full font-black uppercase tracking-widest border border-indigo-500/30">
+                    "${selectedMovieTitle}" Benzeri Hazineler
+                </span>
+            </div>
+            <div id="ai-results-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 animate-hero"></div>
+        `;
+        
+        const grid = document.getElementById('ai-results-grid');
+        validResults.forEach(movieObj => renderFinalCard(movieObj, grid));
+
+    } catch (error) {
+        console.error("AI Hatası:", error);
+        aiText.innerHTML = `
+            <div class="p-10 text-center flex flex-col items-center">
+                <div class="text-amber-500 mb-2 opacity-50">⚠️</div>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter italic">
+                    ${error.message}
+                </p>
+            </div>
+        `;
+    } finally {
+  
+        isAiProcessing = false;
+    }
+}
+
+
+async function fetchMovieData(title, reason) {
+    try {
+        const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(title)}&language=tr-TR`);
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+            return { ...data.results[0], aiReason: reason };
+        }
+    } catch (e) { return null; }
+}
+
+
+window.tempAiMovies = window.tempAiMovies || {};
+
+function renderFinalCard(movie, container) {
+
+    window.tempAiMovies[movie.id] = {
+        id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+        vote_average: movie.vote_average
+    };
+
+    const posterPath = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750?text=Afiş+Yok';
+    const isAlreadyInList = isInAnyList(movie.id);
+
+    const card = document.createElement('div');
+    card.className = "bg-slate-900/60 border border-white/5 rounded-2xl p-2 group hover:border-indigo-500/50 transition-all duration-500 flex flex-col scale-in-center";
+    card.innerHTML = `
+        <div class="relative overflow-hidden rounded-xl mb-2 h-36 md:h-44">
+            <img src="${posterPath}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
+        </div>
+        <h4 class="text-[10px] font-black text-white truncate px-1 uppercase tracking-tighter">${movie.title}</h4>
+        <p class="text-[8px] text-slate-400 mt-1 line-clamp-3 italic px-1 mb-3 leading-tight">"${movie.aiReason}"</p>
+        
+        <button 
+            id="btn-ai-${movie.id}"
+            onclick="addAiMovieToList(${movie.id})"
+            class="mt-auto w-full py-2 rounded-xl text-[9px] font-black transition-all ${isAlreadyInList ? 'bg-emerald-500/10 text-emerald-500' : 'bg-indigo-600 hover:bg-white hover:text-black text-white shadow-lg shadow-indigo-500/20'}"
+            ${isAlreadyInList ? 'disabled' : ''}
+        >
+            ${isAlreadyInList ? '✓ LİSTEDE' : '+ EKLE'}
+        </button>
+    `;
+    container.appendChild(card);
+}
+
+
+window.addAiMovieToList = (id) => {
+    const movie = window.tempAiMovies[id];
+    if (!movie || isInAnyList(id)) return;
+
+  
+    watchList.push(movie);
+    
+    
+    saveAll();
+
+    
+    const btn = document.getElementById(`btn-ai-${id}`);
+    if (btn) {
+        btn.innerText = "✓ EKLENDİ";
+        btn.className = "mt-auto w-full py-2 rounded-xl text-[9px] font-black bg-emerald-500/10 text-emerald-500 cursor-default";
+        btn.disabled = true;
+    }
+
+   
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
+};
 
 window.closeGallery = () => document.getElementById('artist-gallery').classList.add('hidden');
