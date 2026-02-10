@@ -23,18 +23,22 @@ Bu depoyu klonlayın:
 
 Bash
 git clone https://github.com/Y1lmazz1/Sine-Rasgele.git
+
 Ana dizinde config.js adında bir dosya oluşturun (Bu dosya güvenlik nedeniyle .gitignore ile gizlenmiştir).
 
 İçerisine kendi API anahtarlarınızı şu formatta ekleyin:
 
 JavaScript
+
 const CONFIG = {
     API_KEY: 'TMDB_API_ANAHTARINIZ',
     GEMINI_API_KEY: 'GEMINI_API_ANAHTARINIZ'
 };
+
 index.html dosyasını tarayıcınızda açın.
 
 🚀 Teknolojiler
+
 Frontend: HTML5, CSS3 (Tailwind CSS)
 
 Logic: JavaScript (ES6+), Asynchronous API Calls
