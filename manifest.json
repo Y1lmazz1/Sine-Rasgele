@@ -1,0 +1,23 @@
+{
+  "name": "Sine-Rasgele Pro v8.0",
+  "short_name": "SineRasgele",
+  "description": "Akıllı Film ve Dizi Keşif Platformu",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#050810",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

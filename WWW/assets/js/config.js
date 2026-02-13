@@ -1,0 +1,4 @@
+const CONFIG = {
+    API_KEY: '8540cc8b23767444812b9744d6bb846e',
+    GEMINI_API_KEY: 'AIzaSyCqczKV_j4JsO7tBJfrqhmCPtFjC5a8Jig'
+};

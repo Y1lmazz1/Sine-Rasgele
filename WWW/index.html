@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <title>Sine-Rasgele Pro v8.1 | AI Destekli Film Keşif Platformu</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="description" content="Sine-Rasgele ile AI destekli film önerileri alın, izleme listenizi oluşturun ve sinefil istatistiklerinizi takip edin.">
+    <link rel="canonical" href="https://yilmazz1.github.io/sine-rasgele/">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050810">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sine-Rasgele">
+    <link rel="apple-touch-icon" href="assets/img/icon-192.png">
+    <link rel="icon" type="image/png" href="assets/img/icon-192.png">
+
+    <link rel="preconnect" href="https://api.themoviedb.org">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://image.tmdb.org">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08); }
+        
+        @keyframes heroFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-hero { animation: heroFade 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        
+        .animate-pulse-border { animation: pulse-border 2.5s infinite; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5); }
+            70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .slot-machine-frame { background: linear-gradient(145deg, #0f172a, #1e293b); box-shadow: inset 0 0 50px rgba(0,0,0,0.8); }
+        .slot-window { box-shadow: inset 0 0 30px rgba(99, 102, 241, 0.3); }
+
+        /* Mobil Optimizasyonları */
+        @media (max-width: 768px) {
+            .mobile-grid { grid-template-columns: repeat(2, 1fr); }
+            .mobile-full { grid-column: span 2 / span 2; }
+            #movie-content .flex-col { flex-direction: column !important; }
+            #poster { height: 350px !important; width: 100% !important; }
+        }
+        /* Erişilebilirlik için gizli label stili */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    </style>
+</head>
+<body class="bg-[#050810] text-slate-200 py-4 md:py-6 px-3 md:px-4 min-h-screen">
+
+    <div class="max-w-7xl mx-auto space-y-8 md:space-y-10">
+        <nav class="glass-panel p-4 rounded-[1.8rem] md:rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 px-6 md:px-8 shadow-2xl sticky top-2 md:top-4 z-[100]">
+            <div class="flex flex-col items-center md:items-start shrink-0">
+                <h1 class="text-2xl md:text-3xl font-extrabold italic tracking-tighter bg-gradient-to-br from-white to-indigo-400 bg-clip-text text-transparent">SİNE-RASGELE</h1>
+                <p class="text-[8px] md:text-[9px] font-black text-indigo-500/80 uppercase tracking-[0.4em] mt-1">Universal Search v8.1</p>
+            </div>
+            <div class="relative w-full max-w-2xl group">
+                <label for="universal-search" class="sr-only">Film veya Oyuncu Ara</label>
+                <input type="text" id="universal-search" placeholder="Nolan, Tarantino veya Pitt ara..." 
+                       class="w-full bg-slate-950/50 border border-slate-800 rounded-2xl py-3.5 md:py-4 px-12 md:px-14 text-sm focus:border-indigo-500 outline-none transition-all shadow-inner placeholder:text-slate-600">
+                <span class="absolute left-5 md:left-6 top-3.5 md:top-4.5 text-lg opacity-40">🔍</span>
+                <div id="search-spinner" class="hidden absolute right-5 md:right-6 top-3.5 md:top-4.5 animate-spin text-indigo-500">⏳</div>
+            </div>
+            <a href="stats.html" class="text-slate-300 hover:text-indigo-400 font-bold text-sm transition-all flex items-center gap-2">
+                 İstatistiklerim
+            </a>
+        </nav>
+
+        <section id="hero-section" class="relative w-full h-[280px] md:h-[400px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/5 bg-slate-900">
+            <div id="hero-wrapper" class="w-full h-full relative"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[#050810] via-transparent to-transparent"></div>
+            <div id="hero-dots" class="absolute bottom-6 md:bottom-10 left-8 md:left-12 flex gap-3 z-30"></div>
+        </section>
+
+        <section id="artist-gallery" class="hidden animate-hero space-y-4">
+            <div class="flex items-center justify-between px-4 md:px-6">
+                <h3 id="gallery-title" class="text-[10px] md:text-xs font-black text-indigo-400 uppercase tracking-[0.3em]">Arama Sonuçları</h3>
+                <button onclick="closeGallery()" class="text-slate-500 hover:text-white text-[9px] md:text-[10px] font-black border border-slate-800 px-4 py-2 rounded-full transition-all">✕ KAPAT</button>
+            </div>
+            <div id="gallery-content" class="flex gap-4 md:gap-6 overflow-x-auto pb-6 px-4 custom-scrollbar min-h-[220px] md:min-h-[280px]"></div>
+        </section>
+
+        <main id="main-content" class="w-full">
+            <div id="movie-content" class="hidden glass-panel rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl animate-hero">
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/3 relative h-[350px] md:h-[450px] lg:h-auto shrink-0">
+                        <img id="poster" src="assets/img/icon-512.png" alt="Film Posteri" class="w-full h-full object-cover" fetchpriority="high">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent lg:hidden"></div>
+                    </div>
+                    <div class="w-full lg:w-2/3 p-6 md:p-10 lg:p-16 flex flex-col justify-center">
+                        <div class="flex flex-wrap items-center gap-3 mb-4 md:mb-6">
+                            <span id="rating" class="bg-indigo-600 px-4 py-1.5 rounded-xl font-black text-xs md:text-sm text-white shadow-xl shadow-indigo-600/20"></span>
+                            <span id="info" class="text-slate-400 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] bg-slate-800/50 px-3 py-1.5 rounded-xl"></span>
+                        </div>
+                        <h2 id="title" class="text-3xl md:text-6xl font-black mb-4 md:mb-8 leading-tight tracking-tighter text-white"></h2>
+                        <p id="overview" class="text-slate-400 text-sm md:text-lg leading-relaxed mb-6 md:mb-10 line-clamp-4 font-medium"></p>
+                        <div id="cast-container" class="flex gap-4 mb-6 md:mb-10 overflow-x-auto pb-4 custom-scrollbar"></div>
+                        <div class="flex gap-3 md:gap-4">
+                            <button id="trailer-btn" class="flex-1 lg:flex-none flex items-center justify-center gap-3 md:gap-4 bg-white text-black font-black py-4 md:py-5 px-6 md:px-10 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all group shadow-xl">
+                                <span class="text-lg group-hover:scale-125 transition-transform">▶</span> 
+                                <span class="tracking-tighter text-sm md:text-base">FRAGMANI İZLE</span>
+                            </button>
+                            <button id="add-list-btn" onclick="addToWatchList()" aria-label="Listeye Ekle" class="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center bg-slate-800/80 border border-white/10 text-white rounded-2xl transition-all hover:bg-emerald-600 group active:scale-90">
+                                <span class="text-3xl md:text-4xl font-light group-hover:rotate-90 transition-transform duration-300">+</span>
+                            </button>
+                           <button id="share-card-btn" 
+        onclick="window.downloadShareCard(window.currentMovie)" 
+        class="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-2xl font-black transition-all flex items-center justify-center gap-2 border border-white/10">
+    📸 KARTI İNDİR
+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="share-card-template" style="position: fixed; left: -9999px; width: 400px; background: #020617; padding: 30px; border-radius: 24px; border: 2px solid #6366f1;">
+    <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <img id="card-poster" crossorigin="anonymous" src="" style="width: 100%; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
+        <h2 id="card-title" style="color: white; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;"></h2>
+        <div id="card-stars" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div style="color: #6366f1; font-size: 12px; font-weight: 900; letter-spacing: 3px;">SINERASGELE.PRO</div>
+    </div>
+</div>
+
+            <section id="ai-mentor-panel" class="hidden glass-panel rounded-[3rem] p-8 mt-12 mb-12 border-l-4 border-indigo-500 relative overflow-hidden animate-hero">
+                <div class="absolute -right-10 -top-10 text-9xl opacity-10" aria-hidden="true">🤖</div>
+                <div class="flex items-start gap-6 relative z-10">
+                    <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40">🤖</div>
+                    <div class="flex-1">
+                        <h4 class="text-xs font-black text-indigo-400 uppercase tracking-widest mb-2">AI Sinefil Mentoru Diyor ki:</h4>
+                        <p id="ai-recommendation-text" class="text-slate-200 italic leading-relaxed text-sm">İzleme geçmişin analiz ediliyor...</p>
+                        <div id="ai-suggested-movie" class="mt-4"></div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="placeholder" class="h-[180px] md:h-[200px] glass-panel rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col items-center justify-center text-center p-8 border-dashed border-2 border-slate-800/50">
+                <div class="w-10 h-10 bg-indigo-500/10 rounded-full flex items-center justify-center mb-3 text-xl animate-bounce">🎬</div>
+                <h2 class="text-sm md:text-lg font-black text-slate-500 italic uppercase tracking-tighter">Bir arama yap veya filtreleri kullan</h2>
+            </div>
+        </main>
+
+        <section class="glass-panel p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-white/5">
+            <div class="grid grid-cols-1 mobile-grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="space-y-2">
+                    <label for="genre-select" class="text-[9px] md:text-[10px] font-black text-indigo-400 ml-2 uppercase tracking-widest">Film Türü</label>
+                    <select id="genre-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-4 text-[10px] md:text-xs font-bold outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                        <option value="">Tüm Türler</option>
+                        <option value="28">Aksiyon</option>
+                        <option value="12">Macera</option>
+                        <option value="878">Bilim Kurgu</option>
+                        <option value="27">Korku</option>
+                        <option value="18">Dram</option>
+                        <option value="35">Komedi</option>
+                        <option value="53">Gerilim</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="sort-select" class="text-[9px] md:text-[10px] font-black text-indigo-400 ml-2 uppercase tracking-widest">Sıralama</label>
+                    <select id="sort-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-4 text-[10px] md:text-xs font-bold outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                        <option value="vote_average.desc">En Yüksek Puan</option>
+                        <option value="popularity.desc">En Popüler</option>
+                        <option value="primary_release_date.desc">En Yeni</option>
+                        <option value="revenue.desc">En Çok Kazanan</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="lang-select" class="text-[9px] md:text-[10px] font-black text-indigo-400 ml-2 uppercase tracking-widest">Orijinal Dil</label>
+                    <select id="lang-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-4 text-[10px] md:text-xs font-bold outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                        <option value="">Hepsi</option>
+                        <option value="en">İngilizce</option>
+                        <option value="tr">Türkçe</option>
+                        <option value="fr">Fransızca</option>
+                        <option value="ko">Korece</option>
+                        <option value="ja">Japonca</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="year-start" class="text-[9px] md:text-[10px] font-black text-indigo-400 ml-2 uppercase tracking-widest">Yıl (Min)</label>
+                    <input type="number" id="year-start" placeholder="1900" class="w-full bg-slate-950 border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-4 text-[10px] md:text-xs font-bold outline-none focus:border-indigo-500 transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label for="vote-min" class="text-[9px] md:text-[10px] font-black text-indigo-400 ml-2 uppercase tracking-widest">Minimum Puan</label>
+                    <select id="vote-min" class="w-full bg-slate-950 border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-4 text-[10px] md:text-xs font-bold outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                        <option value="0">Farketmez</option>
+                        <option value="5">5.0+</option>
+                        <option value="7">7.0+</option>
+                        <option value="8">8.0+</option>
+                        <option value="9">9.0+</option>
+                    </select>
+                </div>
+                <div class="flex items-end mobile-full">
+                    <button id="btn" class="w-full h-[48px] md:h-[52px] bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl md:rounded-2xl text-[10px] md:text-[11px] tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
+                        FİLTRELE
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
+            <div class="glass-panel p-6 md:p-8 rounded-[2.2rem] md:rounded-[2.5rem] h-[350px] md:h-[380px] flex flex-col shadow-2xl">
+                <h3 class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-3">📌 İZLENECEKLER ARŞİVİ</h3>
+                <div id="watch-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-4"></div>
+            </div>
+            <div class="glass-panel p-6 md:p-8 rounded-[2.2rem] md:rounded-[2.5rem] h-[350px] md:h-[380px] flex flex-col shadow-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[10px] md:text-[11px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-3">✅ SİNEFİL GEÇMİŞİM</h3>
+                    <span id="badge-count" class="text-[9px] md:text-[10px] bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-black border border-emerald-500/20">0 Rozet</span>
+                </div>
+                <div id="badge-shelf" class="flex flex-wrap gap-2 mb-4 p-4 bg-slate-950/50 rounded-2xl min-h-[60px] items-center border border-white/5"></div>
+                <div id="watched-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-3"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="slot-overlay" class="fixed inset-0 bg-[#050810]/98 z-[1000] hidden flex flex-col items-center justify-center backdrop-blur-3xl p-6">
+        <div class="mb-8 md:mb-10 text-center">
+            <div class="inline-block px-6 md:px-8 py-2.5 md:py-3 bg-indigo-600 rounded-full text-[10px] md:text-[12px] font-black tracking-[0.4em] text-white uppercase animate-pulse mb-6">🎰 JACKPOT MOVIE 🎰</div>
+        </div>
+        <div class="relative w-full max-w-5xl p-5 md:p-10 rounded-[3rem] md:rounded-[4rem] slot-machine-frame border-4 md:border-8 border-slate-900 shadow-2xl">
+            <div class="relative h-[300px] md:h-[400px] overflow-hidden rounded-[2.2rem] md:rounded-[3rem] bg-black slot-window border-4 border-indigo-500/20">
+                <div class="absolute top-1/2 left-0 w-full -translate-y-1/2 z-50 flex justify-between px-4 md:px-6 pointer-events-none">
+                    <span class="text-3xl md:text-5xl text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,1)]">▶</span>
+                    <span class="text-3xl md:text-5xl text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,1)]">◀</span>
+                </div>
+                <div id="slot-strip" class="flex items-center h-full transition-all duration-[4000ms]"></div>
+            </div>
+        </div>
+        <div id="countdown-circle" class="mt-10 md:mt-12 w-20 h-20 md:w-24 md:h-24 rounded-full border-8 border-indigo-600 flex items-center justify-center text-3xl md:text-4xl font-black text-white italic">3</div>
+    </div>
+
+    <div id="trailer-modal" class="hidden fixed inset-0 z-[1100] bg-slate-950/98 backdrop-blur-3xl flex items-center justify-center p-3">
+        <div class="relative w-full max-w-5xl aspect-video rounded-[1.8rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+            <button onclick="closeTrailer()" class="absolute top-4 right-4 z-[1200] bg-black/50 hover:bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all">✕</button>
+            <div id="trailer-container" class="w-full h-full"></div>
+        </div>
+    </div>
+
+    <div id="slot-btn" class="fixed bottom-8 right-8 z-[500] group cursor-pointer animate-pulse-border rounded-full" role="button" aria-label="Şansıma Güveniyorum - Rastgele Film Seç">
+        <div class="relative flex items-center gap-4 bg-gradient-to-br from-indigo-600 via-indigo-800 to-slate-950 p-1 rounded-full shadow-2xl border border-white/20 transition-all duration-500 group-hover:scale-110">
+            <div class="bg-slate-950 flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-inner border border-white/5">
+                <span class="text-2xl md:text-3xl group-hover:rotate-[360deg] transition-transform duration-1000">🎰</span>
+            </div>
+            <div class="pr-6 py-2 hidden sm:block text-white font-black text-[9px] md:text-[10px] uppercase italic tracking-widest leading-none">Şansıma<br>Güveniyorum</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/script.js" defer></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker Kayıt Başarılı!'))
+                    .catch(err => console.error('Service Worker Kayıt Hatası:', err));
+            });
+        }
+    </script>
+</body>
+</html>
